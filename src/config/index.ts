@@ -44,21 +44,24 @@ export const SITE_CONTENT: SiteContent = {
   projects: [
     {
       name: "Analyse de la Performance F1 avec Tableau Desktop",
-      summary: "Dashboards interactifs pour analyser performances pilotes et equipes. Technologies : Tableau, Python, SQL, Data Visualization, Data Analysis",
+      summary:
+        "Dashboards interactifs pour analyser performances pilotes et equipes. Technologies : Tableau, Python, SQL, Data Visualization, Data Analysis",
       linkPreview: "/",
       linkSource: "https://github.com/immois/astro-zen",
       image: "/spotifu.png",
     },
     {
       name: "Elfirma – Web & Software Solution pour l’Agriculture",
-      summary: "Elfirma is a digital platform designed to modernize the agricultural sector by connecting farmers, experts, and suppliers. It offers integrated web and software solutions that facilitate access to agricultural services, expert advice, and a wide range of products",
+      summary:
+        "Elfirma is a digital platform designed to modernize the agricultural sector by connecting farmers, experts, and suppliers. It offers integrated web and software solutions that facilitate access to agricultural services, expert advice, and a wide range of products",
       linkPreview: "/",
       linkSource: "https://github.com/immois/astro-zen",
       image: "/shopify-clon.png",
     },
     {
       name: "MediConnect – Web App for Medical Practices",
-      summary: "Web application designed to streamline operations for medical practices by connecting doctors, specialists, and suppliers. It provides integrated solutions for managing appointments, accessing medical expertise, and sourcing healthcare products and services",
+      summary:
+        "Web application designed to streamline operations for medical practices by connecting doctors, specialists, and suppliers. It provides integrated solutions for managing appointments, accessing medical expertise, and sourcing healthcare products and services",
       linkPreview: "/",
       linkSource: "https://github.com/immois/astro-zen",
       image: "/clone-ig.png",
