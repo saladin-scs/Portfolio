@@ -2,7 +2,7 @@ import type { SiteConfig, SiteContent } from "../types";
 
 export const SITE_CONFIG: SiteConfig = {
   title: "Saleh Eddinne Khalfaoui — Mobile & Web Engineer",
-  author: "Saleh Eddinne Khalfaoui",
+  author: "saladinProduction",
   description:
     "Software Engineer based in Tunisia. I specialize in UI design, web and mobile application development and maintenance.",
   lang: "en",
