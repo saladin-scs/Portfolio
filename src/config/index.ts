@@ -1,10 +1,10 @@
 import type { SiteConfig, SiteContent } from "../types";
 
 export const SITE_CONFIG: SiteConfig = {
-  title: "Alejandro Múnez — Mobile & Web Developer",
-  author: "Alejandro Múnez Cuntez",
+  title: "Saleh Eddinne Khalfaoui — Mobile & Web Engineer",
+  author: "Saleh Eddinne Khalfaoui",
   description:
-    "Software Engineer based in San Francisco, USA. I specialize in UI design, web and mobile application development and maintenance.",
+    "Software Engineer based in Tunisia. I specialize in UI design, web and mobile application development and maintenance.",
   lang: "en",
   siteLogo: "/alejandro-small.jpg",
   navLinks: [
