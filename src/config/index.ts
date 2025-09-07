@@ -13,8 +13,10 @@ export const SITE_CONFIG: SiteConfig = {
     { text: "About", href: "#about" },
   ],
   socialLinks: [
-    { text: "LinkedIn", href: "linkedin.com/in/saleheddinkhalfaoui" },
-    { text: "Github", href: "https://github.com/saladin-scs" },
+    { text: "LinkedIn", href: "https://linkedin.com/in/saleheddinkhalfaoui" },
+    { text: "GitHub", href: "https://github.com/saladin-scs" },
+    { text: "Portfolio", href: "https://saladinproduction.vercel.app" },
+    { text: "Resume", href: "https://saladinproduction.vercel.app/SalehEddineKhalfaoui_Resume.pdf" },
   ],
   socialImage: "/zen-og.png",
   canonicalURL: "https://astro-zen.vercel.app",
@@ -29,16 +31,15 @@ export const SITE_CONTENT: SiteContent = {
     email: "goforsaladin@gmail.com",
   },
   experience: [
-   
     {
       company: "Mobelite Labs",
       position: "Web & BI Developer",
       startDate: "Feb 2024",
       endDate: "Jan 2025",
       summary: [
-"I designed and developed an interactive web application using modern frameworks (React/Next.js), integrating Power BI dashboards with REST APIs and automated ETL pipelines. By managing tasks and sprints in Jira, I ensured efficient collaboration and delivery. This solution enabled real-time data visualization and reporting, reduced manual reporting time by 50%, and improved decision-making efficiency by 30%."  ],
+        "I designed and developed an interactive web application using modern frameworks (React/Next.js), integrating Power BI dashboards with REST APIs and automated ETL pipelines. By managing tasks and sprints in Jira, I ensured efficient collaboration and delivery. This solution enabled real-time data visualization and reporting, reduced manual reporting time by 50%, and improved decision-making efficiency by 30%."
+      ],
     },
-   
   ],
   projects: [
     {
@@ -57,7 +58,7 @@ export const SITE_CONTENT: SiteContent = {
     },
     {
       name: "MediConnect – Web App for Medical Practices",
-      summary: "web application designed to streamline operations for medical practices by connecting doctors, specialists, and suppliers. It provides integrated solutions for managing appointments, accessing medical expertise, and sourcing healthcare products and services",
+      summary: "Web application designed to streamline operations for medical practices by connecting doctors, specialists, and suppliers. It provides integrated solutions for managing appointments, accessing medical expertise, and sourcing healthcare products and services",
       linkPreview: "/",
       linkSource: "https://github.com/immois/astro-zen",
       image: "/clone-ig.png",
@@ -65,12 +66,10 @@ export const SITE_CONTENT: SiteContent = {
   ],
   about: {
     description: `
-      Hi, saleh eddine, a passionate Mobile and Web Developer with a knack for crafting seamless digital experiences. With a strong background in both Android and iOS development, as well as front-end web technologies, I thrive in the intersection where creativity meets technology.
+      Hi, Saleh Eddine, a passionate Mobile and Web Developer with a knack for crafting seamless digital experiences. With a strong background in both Android and iOS development, as well as front-end web technologies, I thrive in the intersection where creativity meets technology.
 
       Over the years, I’ve honed my skills in building robust, user-friendly applications that not only meet the needs of users but also push the boundaries of what’s possible. My projects range from innovative mobile applications to responsive web designs, all with a focus on performance, security, and scalability.
     `,
     image: "/alejandro-big.jpg",
   },
 };
-
-// #5755ff
