@@ -1,0 +1,45 @@
+---
+import { getImage } from "astro:assets";
+import type { HTMLAttributes } from "astro/types";
+
+interface Props {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  class?: string;
+  /** Above-the-fold images only (e.g. header logo). Defaults to lazy loading. */
+  priority?: boolean;
+  inferSize?: boolean;
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  class: className,
+  priority = false,
+  inferSize = false,
+} = Astro.props;
+
+const optimized = inferSize
+  ? await getImage({ src, inferSize: true })
+  : await getImage({ src, width, height });
+
+const attributes: HTMLAttributes<"img"> = {
+  ...optimized.attributes,
+  src: optimized.src,
+  alt,
+  class: className,
+  loading: priority ? "eager" : "lazy",
+  decoding: "async",
+  ...(priority ? { fetchpriority: "high" as const } : {}),
+};
+
+if (optimized.srcSet.values.length > 0) {
+  attributes.srcset = optimized.srcSet.attribute;
+}
+---
+
+<img {...attributes} />

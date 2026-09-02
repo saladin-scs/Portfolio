@@ -1,59 +1,609 @@
 ---
 import Section from "./Section.astro";
-import { Image } from "astro:assets";
-import type { ProjectProps } from "@types";
+import OptimizedImage from "./OptimizedImage.astro";
+import { getImage } from "astro:assets";
+import type { ProjectProps, ProjectLink, UiStrings } from "@types";
 
 interface Props {
   projects: ProjectProps[];
+  ui: UiStrings;
 }
 
-const { projects } = Astro.props;
+const { projects: rawProjects, ui } = Astro.props;
+
+type GalleryImage = NonNullable<ProjectProps["images"]>[number] & {
+  mainSrc: string;
+  thumbSrc: string;
+};
+
+type EnrichedProject = ProjectProps & {
+  previewMainSrc: string;
+  previewThumbSrc: string;
+  images?: GalleryImage[];
+};
+
+const projects: EnrichedProject[] = await Promise.all(
+  rawProjects.map(async (project) => {
+    const [previewMain, previewThumb] = await Promise.all([
+      getImage({ src: project.image, width: 960, height: 600 }),
+      getImage({ src: project.image, width: 112, height: 64 }),
+    ]);
+
+    let images: GalleryImage[] | undefined;
+    if (project.images?.length) {
+      images = await Promise.all(
+        project.images.map(async (item) => {
+          const [main, thumb] = await Promise.all([
+            getImage({ src: item.src, width: 960, height: 600 }),
+            getImage({ src: item.src, width: 112, height: 64 }),
+          ]);
+
+          return { ...item, mainSrc: main.src, thumbSrc: thumb.src };
+        }),
+      );
+    }
+
+    return {
+      ...project,
+      previewMainSrc: previewMain.src,
+      previewThumbSrc: previewThumb.src,
+      images,
+    };
+  }),
+);
+
+function resolveLinks(project: ProjectProps): ProjectLink[] {
+  if (project.links?.length) return project.links;
+  const links: ProjectLink[] = [];
+  if (project.linkSource) links.push({ text: ui.projects.source, href: project.linkSource });
+  if (project.linkPreview && project.linkPreview !== "/") {
+    links.push({ text: ui.projects.liveDemo, href: project.linkPreview });
+  }
+  return links;
+}
+
+function projectId(name: string, index: number): string {
+  return `project-${index}-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
 ---
 
-<Section text="Featured Projects" href="projects">
-  {
-    projects.map(({ name, summary, image, linkPreview, linkSource }, index) => {
-      const top = 98 + index * 40;
-      return (
-        <div
-          style={`top: ${top}px;`}
-          class="sticky mb-12 rounded-2xl border border-neutral/20 bg-black"
-        >
-          <div class="bg-difu relative z-[1] grid h-[580px] w-full grid-rows-2 rounded-2xl bg-[#1c232d]/85 before:absolute before:inset-0 before:z-[-1] before:rounded-2xl before:bg-[url(/raja.png)] before:bg-[length:128px] before:bg-repeat before:opacity-[5%] before:content-[''] sm:grid-cols-2 sm:grid-rows-1 md:h-96">
-            <div class="px-6 pt-12">
-              <h3 class="mb-5 font-serif text-3xl font-medium text-primary">
-                {name}
-              </h3>
-              <p class="text-base text-neutral">{summary}</p>
-              <div class="flex gap-5 pt-10 text-white">
-                <a
-                  href={linkSource}
-                  target="_blank"
-                  class="after:relative after:bottom-[-5px] after:content-[url(/external.svg)] hover:underline"
-                >
-                  Source
-                </a>
-                <a
-                  href={linkPreview}
-                  target="_blank"
-                  class="after:relative after:bottom-[-5px] after:content-[url(/external.svg)] hover:underline"
-                >
-                  Preview
-                </a>
+<Section text={ui.sections.projects} href="projects">
+  <div class="flex flex-col gap-10">
+    {
+      projects.map((project, index) => {
+        const {
+          name,
+          summary,
+          image,
+          subtitle,
+          badge,
+          technologies,
+          featured,
+          slug: projectSlug,
+        } = project;
+
+        const projectLinks = resolveLinks(project);
+        const modalId = projectId(name, index);
+        const hasGallery = Boolean(project.images?.length);
+
+        return (
+          <article
+            class="group theme-panel overflow-hidden transition-colors hover:border-border/40"
+            id={projectSlug ?? (featured ? "bytebattle" : undefined)}
+          >
+            <div class="grid gap-0 md:grid-cols-2">
+              <button
+                type="button"
+                class="project-open relative block w-full overflow-hidden border-0 bg-inset/20 p-0 text-left md:min-h-[260px]"
+                data-project-target={modalId}
+                aria-label={`${ui.projects.openProjectDetails} ${name}`}
+              >
+                <OptimizedImage
+                  src={image}
+                  alt={`${name} preview`}
+                  width={640}
+                  height={400}
+                  class="h-full min-h-[220px] w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02] md:min-h-[260px]"
+                />
+                <span class="absolute inset-0 bg-overlay/0 transition-colors duration-300 group-hover:bg-overlay/20" />
+                {hasGallery && (
+                  <span class="absolute right-4 bottom-4 rounded-full border border-foreground/20 bg-overlay/60 px-3 py-1 text-xs text-white backdrop-blur-sm">
+                    {project.images!.length} {ui.projects.screenshots}
+                  </span>
+                )}
+              </button>
+
+              <div class="flex flex-col justify-between px-6 py-8 md:px-8">
+                <div>
+                  {badge && (
+                    <span class="mb-3 inline-block rounded-md border border-border/40 px-3 py-1 text-xs font-medium tracking-wide text-neutral uppercase">
+                      {badge}
+                    </span>
+                  )}
+                  <h3 class="mb-1 font-serif text-2xl font-medium text-primary md:text-3xl">
+                    {name}
+                  </h3>
+                  {subtitle && (
+                    <p class="mb-3 text-lg font-medium text-white/90">
+                      {subtitle}
+                    </p>
+                  )}
+                  <p class="line-clamp-3 text-sm leading-relaxed text-neutral md:text-base">
+                    {summary}
+                  </p>
+
+                  {technologies && technologies.length > 0 && (
+                    <ul
+                      class="mt-4 flex flex-wrap gap-2"
+                      aria-label={`${ui.projects.technologiesIn} ${name}`}
+                    >
+                      {technologies.slice(0, 5).map((tech) => (
+                        <li>
+                          <span class="inline-block rounded-md border border-border/40 px-2.5 py-1 text-xs text-white/90">
+                            {tech}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div class="mt-6 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    class="project-open btn-primary rounded-full px-5 py-2.5 text-sm font-medium transition-colors"
+                    data-project-target={modalId}
+                  >
+                    {ui.projects.viewProject}
+                  </button>
+                  {
+                    projectLinks.map(({ text, href }) => (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="project-external-link inline-flex items-center gap-1 rounded-full border border-border/40 px-4 py-2 text-sm text-white transition-colors hover:border-primary/60 hover:text-primary"
+                      >
+                        {text}
+                        <OptimizedImage
+                          src="/external.svg"
+                          alt=""
+                          width={14}
+                          height={14}
+                          class="h-3.5 w-3.5 opacity-70"
+                        />
+                      </a>
+                    ))
+                  }
+                </div>
               </div>
             </div>
-            <div class="flex items-end justify-end overflow-hidden">
-              <Image
-                class="h-full w-[95%] rounded-ss-xl rounded-ee-2xl object-none object-left-top sm:h-[85%] sm:w-full"
-                src={image}
-                alt={name}
-                width="736"
-                height="483"
-              />
+          </article>
+        );
+      })
+    }
+  </div>
+
+  {
+    projects.map((project, index) => {
+      const {
+        name,
+        summary,
+        subtitle,
+        badge,
+        tagline,
+        technologies,
+        techGroups,
+        caseStudy,
+        images,
+        previewMainSrc,
+        previewThumbSrc,
+      } = project;
+
+      const modalId = projectId(name, index);
+      const gallery: GalleryImage[] = images?.length
+        ? images
+        : [{
+            src: project.image,
+            alt: name,
+            caption: ui.projects.preview,
+            mainSrc: previewMainSrc,
+            thumbSrc: previewThumbSrc,
+          }];
+      const projectLinks = resolveLinks(project);
+
+      return (
+        <dialog
+          id={modalId}
+          class="project-modal fixed inset-0 z-[100] m-0 h-full max-h-none w-full max-w-none border-0 bg-transparent p-0 backdrop:backdrop-blur-sm open:animate-none"
+          aria-labelledby={`${modalId}-title`}
+        >
+          <div class="flex min-h-full items-end justify-center p-0 sm:items-center sm:p-4">
+            <div class="project-modal-panel relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-border/20 bg-inset shadow-2xl sm:rounded-2xl">
+              <header class="flex items-start justify-between gap-4 border-b border-border/20 px-5 py-4 sm:px-6">
+                <div class="min-w-0">
+                  {badge && (
+                    <p class="mb-1 text-xs tracking-wide text-neutral uppercase">
+                      {badge}
+                    </p>
+                  )}
+                  <h3
+                    id={`${modalId}-title`}
+                    class="truncate font-serif text-xl font-medium text-primary sm:text-2xl"
+                  >
+                    {name}
+                  </h3>
+                  {subtitle && (
+                    <p class="text-sm text-white/80">{subtitle}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  class="project-close flex-shrink-0 rounded-full border border-border/40 p-2 text-neutral transition-colors hover:border-foreground/40 hover:text-white"
+                  aria-label={ui.projects.closeProject}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </header>
+
+              <div class="overflow-y-auto overscroll-contain">
+                <div class="border-b border-border/20 bg-surface/50 p-4 sm:p-6" data-gallery-root={modalId}>
+                  <div class="overflow-hidden rounded-xl border border-border/20 bg-inset" id={`${modalId}-panel`} role="tabpanel">
+                    <OptimizedImage
+                      class="gallery-main h-auto max-h-[42vh] w-full object-contain object-top"
+                      src={gallery[0].mainSrc}
+                      alt={gallery[0].alt}
+                      width={960}
+                      height={600}
+                    />
+                  </div>
+                  {gallery.length > 1 && (
+                    <ul class="mt-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label={ui.projects.projectScreenshots}>
+                      {
+                        gallery.map(({ alt, caption, mainSrc, thumbSrc }, thumbIndex) => (
+                          <li class="flex-shrink-0">
+                            <button
+                              type="button"
+                              class={`gallery-thumb overflow-hidden rounded-lg border transition-all ${thumbIndex === 0 ? "border-primary ring-2 ring-primary/30" : "border-border/30 opacity-70 hover:border-border/60 hover:opacity-100"}`}
+                              data-gallery-target={modalId}
+                              data-src={mainSrc}
+                              data-alt={alt}
+                              data-caption={caption ?? alt}
+                              data-index={thumbIndex}
+                              role="tab"
+                              id={`${modalId}-tab-${thumbIndex}`}
+                              aria-controls={`${modalId}-panel`}
+                              aria-selected={thumbIndex === 0 ? "true" : "false"}
+                              aria-label={caption ?? alt}
+                            >
+                              <OptimizedImage
+                                src={thumbSrc}
+                                alt=""
+                                width={112}
+                                height={64}
+                                class="h-14 w-24 object-cover object-top sm:h-16 sm:w-28"
+                              />
+                            </button>
+                          </li>
+                        ))
+                      }
+                    </ul>
+                  )}
+                  {gallery[0].caption && (
+                    <p class="gallery-caption mt-2 text-xs text-neutral">
+                      {gallery[0].caption}
+                    </p>
+                  )}
+                </div>
+
+                <div class="space-y-8 px-5 py-6 sm:px-6">
+                  <section>
+                    <p class="text-sm leading-relaxed text-neutral md:text-base">
+                      {summary}
+                    </p>
+                    {tagline && (
+                      <p class="mt-3 text-sm text-white/75">{tagline}</p>
+                    )}
+                  </section>
+
+                  {technologies && technologies.length > 0 && (
+                    <section>
+                      <h4 class="mb-3 text-xs font-medium tracking-wide text-neutral uppercase">
+                        {ui.projects.technologies}
+                      </h4>
+                      <ul class="flex flex-wrap gap-2">
+                        {technologies.map((tech) => (
+                          <li>
+                            <span class="inline-block rounded-md border border-border/40 px-3 py-1.5 text-xs text-white/90">
+                              {tech}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+
+                  {caseStudy && (
+                    <>
+                      <section>
+                        <h4 class="mb-3 font-serif text-lg font-medium text-white">
+                          {ui.projects.overview}
+                        </h4>
+                        <blockquote class="border-l-2 border-primary/60 pl-4 text-sm leading-relaxed text-neutral italic">
+                          {caseStudy.overview}
+                        </blockquote>
+                      </section>
+
+                      <section>
+                        <h4 class="mb-4 font-serif text-lg font-medium text-white">
+                          {ui.projects.keyFeatures}
+                        </h4>
+                        <ul class="grid list-none gap-3 sm:grid-cols-2">
+                          {caseStudy.features.map(({ title, description }) => (
+                            <li class="rounded-xl border border-border/20 bg-surface/50 p-4">
+                              <p class="card-title-sm">{title}</p>
+                              <p class="text-xs leading-relaxed text-neutral">
+                                {description}
+                              </p>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+
+                      <section>
+                        <h4 class="mb-4 font-serif text-lg font-medium text-white">
+                          {ui.projects.architecture}
+                        </h4>
+                        <ol class="space-y-0 text-center">
+                          {caseStudy.architecture.map((step, archIndex) => (
+                            <>
+                              <li class="rounded-lg border border-border/20 bg-surface-elevated/80 px-4 py-2 text-sm text-white/90">
+                                {step}
+                              </li>
+                              {archIndex < caseStudy.architecture.length - 1 && (
+                                <li class="py-1 text-primary" aria-hidden="true">↓</li>
+                              )}
+                            </>
+                          ))}
+                        </ol>
+                        {caseStudy.architectureDescription && (
+                          <p class="mt-4 text-sm leading-relaxed text-neutral">
+                            {caseStudy.architectureDescription}
+                          </p>
+                        )}
+                      </section>
+
+                      {caseStudy.ai && (
+                        <section>
+                          <h4 class="mb-3 font-serif text-lg font-medium text-white">
+                            {ui.projects.aiSolution}
+                          </h4>
+                          <p class="mb-4 text-sm leading-relaxed text-neutral">
+                            {caseStudy.ai.overview}
+                          </p>
+                          <ul class="grid list-none gap-3 sm:grid-cols-2">
+                            {caseStudy.ai.capabilities.map(({ title, description }) => (
+                              <li class="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                                <p class="card-title-sm">{title}</p>
+                                <p class="text-xs leading-relaxed text-neutral">
+                                  {description}
+                                </p>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )}
+
+                      <section class="grid gap-4 sm:grid-cols-2">
+                        <div class="rounded-xl border border-border/20 bg-surface/50 p-4">
+                          <p class="card-title-sm mb-2">{ui.projects.frontend}</p>
+                          <p class="text-xs leading-relaxed text-neutral">{caseStudy.frontend}</p>
+                        </div>
+                        <div class="rounded-xl border border-border/20 bg-surface/50 p-4">
+                          <p class="card-title-sm mb-2">{ui.projects.backend}</p>
+                          <p class="text-xs leading-relaxed text-neutral">{caseStudy.backend}</p>
+                        </div>
+                        <div class="rounded-xl border border-border/20 bg-surface/50 p-4 sm:col-span-2">
+                          <p class="card-title-sm mb-2">{ui.projects.devopsHa}</p>
+                          <p class="text-xs leading-relaxed text-neutral">
+                            {caseStudy.devops} {caseStudy.highAvailability}
+                          </p>
+                        </div>
+                      </section>
+
+                      {caseStudy.team && (
+                        <section>
+                          <h4 class="mb-2 text-sm font-medium text-white/80">{ui.projects.team}</h4>
+                          <p class="text-xs text-neutral">
+                            {caseStudy.team.members.join(", ")}
+                            {caseStudy.team.guidance && (
+                              <span class="mt-1 block text-neutral/70">
+                                {ui.projects.guidance} {caseStudy.team.guidance}
+                              </span>
+                            )}
+                          </p>
+                        </section>
+                      )}
+
+                      {techGroups && techGroups.length > 0 && (
+                        <section>
+                          <h4 class="mb-3 text-xs font-medium tracking-wide text-neutral uppercase">
+                            {ui.projects.stack}
+                          </h4>
+                          <div class="grid gap-3 sm:grid-cols-2">
+                            {techGroups.map(({ label, items }) => (
+                              <div class="rounded-xl border border-border/20 bg-surface/50 p-3">
+                                <p class="mb-2 text-xs text-neutral uppercase">{label}</p>
+                                <ul class="flex flex-wrap gap-1.5">
+                                  {items.map((item) => (
+                                    <li>
+                                      <span class="inline-block rounded border border-border/40 px-2 py-0.5 text-xs text-white/90">
+                                        {item}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+                    </>
+                  )}
+
+                  {projectLinks.length > 0 && (
+                    <section class="flex flex-wrap gap-3 border-t border-border/20 pt-6">
+                      {
+                        projectLinks.map(({ text, href }) => (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class={`inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-medium transition-colors ${text === ui.projects.liveDemo || text === "Live Demo" || text === "Démo en ligne" ? "bg-primary text-on-primary hover:bg-primary/90" : "border border-border/40 text-white hover:border-primary/60 hover:text-primary"}`}
+                          >
+                            {text}
+                            <OptimizedImage src="/external.svg" alt="" width={14} height={14} class="h-3.5 w-3.5" />
+                          </a>
+                        ))
+                      }
+                    </section>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </dialog>
       );
     })
   }
 </Section>
+
+<script>
+  function initProjectModals() {
+    document.querySelectorAll<HTMLAnchorElement>(".project-external-link").forEach((link) => {
+      link.addEventListener("click", (event) => event.stopPropagation());
+    });
+
+    const openButtons = document.querySelectorAll<HTMLButtonElement>(".project-open");
+    const closeButtons = document.querySelectorAll<HTMLButtonElement>(".project-close");
+    const dialogs = document.querySelectorAll<HTMLDialogElement>(".project-modal");
+
+    openButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetId = button.dataset.projectTarget;
+        const dialog = document.getElementById(targetId ?? "") as HTMLDialogElement | null;
+        dialog?.showModal();
+        document.body.style.overflow = "hidden";
+      });
+    });
+
+    closeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const dialog = button.closest("dialog");
+        dialog?.close();
+      });
+    });
+
+    dialogs.forEach((dialog) => {
+      dialog.addEventListener("click", (event) => {
+        const panel = dialog.querySelector(".project-modal-panel");
+        if (panel && event.target instanceof Node && !panel.contains(event.target)) {
+          dialog.close();
+        }
+      });
+
+      dialog.addEventListener("close", () => {
+        if (!document.querySelector(".project-modal[open]")) {
+          document.body.style.overflow = "";
+        }
+      });
+
+      dialog.addEventListener("cancel", () => {
+        document.body.style.overflow = "";
+      });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>(".gallery-thumb").forEach((thumb) => {
+      thumb.addEventListener("click", () => {
+        const galleryId = thumb.dataset.galleryTarget;
+        const root = document.querySelector(`[data-gallery-root="${galleryId}"]`);
+        if (!root) return;
+
+        const main = root.querySelector<HTMLImageElement>(".gallery-main img, .gallery-main");
+        const caption = root.querySelector<HTMLElement>(".gallery-caption");
+        const src = thumb.dataset.src;
+        const alt = thumb.dataset.alt;
+        const cap = thumb.dataset.caption;
+
+        if (main && src) {
+          main.style.opacity = "0";
+          window.setTimeout(() => {
+            main.src = src;
+            if (alt) main.alt = alt;
+            main.style.opacity = "1";
+          }, 150);
+        }
+
+        if (caption && cap) caption.textContent = cap;
+
+        root.querySelectorAll(".gallery-thumb").forEach((item) => {
+          const isActive = item === thumb;
+          item.classList.toggle("border-primary", isActive);
+          item.classList.toggle("ring-2", isActive);
+          item.classList.toggle("ring-primary/30", isActive);
+          item.classList.toggle("border-border/30", !isActive);
+          item.classList.toggle("opacity-70", !isActive);
+          item.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+      });
+    });
+  }
+
+  initProjectModals();
+  document.addEventListener("astro:page-load", initProjectModals);
+</script>
+
+<style>
+  .gallery-main {
+    transition: opacity 0.2s ease;
+  }
+
+  .project-modal::backdrop {
+    background: var(--theme-overlay);
+    backdrop-filter: blur(4px);
+  }
+
+  .project-modal-panel {
+    animation: modal-slide-up 0.35s ease both;
+  }
+
+  @keyframes modal-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (min-width: 640px) {
+    .project-modal-panel {
+      animation: modal-fade-in 0.3s ease both;
+    }
+
+    @keyframes modal-fade-in {
+      from {
+        opacity: 0;
+        transform: scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  }
+</style>

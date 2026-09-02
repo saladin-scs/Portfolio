@@ -1,0 +1,177 @@
+---
+import type { UiStrings } from "@types";
+
+interface Props {
+  ui: UiStrings;
+}
+
+const { ui } = Astro.props;
+---
+
+<div class="theme-toggle relative" data-theme-toggle>
+  <button
+    type="button"
+    id="theme-toggle-btn"
+    class="theme-toggle-trigger flex h-9 w-9 items-center justify-center rounded-lg border border-border/40 text-neutral transition-colors hover:border-primary/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    aria-label={ui.theme.toggle}
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    aria-controls="theme-toggle-menu"
+    title={ui.theme.toggle}
+  >
+    <span class="theme-icon theme-icon-system" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" stroke-linecap="round" />
+      </svg>
+    </span>
+    <span class="theme-icon theme-icon-light hidden" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round" />
+      </svg>
+    </span>
+    <span class="theme-icon theme-icon-dark hidden" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
+  </button>
+
+  <ul
+    id="theme-toggle-menu"
+    class="theme-toggle-menu absolute top-full right-0 z-50 mt-2 hidden min-w-[160px] overflow-hidden rounded-xl border border-border/40 bg-surface py-1"
+    role="listbox"
+    aria-label={ui.theme.label}
+  >
+    <li role="option">
+      <button
+        type="button"
+        class="theme-option flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-neutral transition-colors hover:bg-surface-elevated hover:text-white"
+        data-theme-value="system"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" stroke-linecap="round" />
+        </svg>
+        {ui.theme.system}
+      </button>
+    </li>
+    <li role="option">
+      <button
+        type="button"
+        class="theme-option flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-neutral transition-colors hover:bg-surface-elevated hover:text-white"
+        data-theme-value="light"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2" stroke-linecap="round" />
+        </svg>
+        {ui.theme.light}
+      </button>
+    </li>
+    <li role="option">
+      <button
+        type="button"
+        class="theme-option flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-neutral transition-colors hover:bg-surface-elevated hover:text-white"
+        data-theme-value="dark"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke-linecap="round" />
+        </svg>
+        {ui.theme.dark}
+      </button>
+    </li>
+  </ul>
+</div>
+
+<script>
+  import {
+    applyTheme,
+    getStoredPreference,
+    savePreference,
+    type ThemePreference,
+  } from "../lib/theme";
+
+  function initThemeToggle() {
+    const root = document.documentElement;
+    const toggleBtn = document.getElementById("theme-toggle-btn");
+    const menu = document.getElementById("theme-toggle-menu");
+    const options = document.querySelectorAll<HTMLButtonElement>(".theme-option");
+    const icons = {
+      system: document.querySelector(".theme-icon-system"),
+      light: document.querySelector(".theme-icon-light"),
+      dark: document.querySelector(".theme-icon-dark"),
+    };
+
+    if (!toggleBtn || !menu) return;
+    const btn = toggleBtn;
+    const menuEl = menu;
+
+    let preference = getStoredPreference();
+
+    function updateUI(pref: ThemePreference) {
+      preference = pref;
+      icons.system?.classList.toggle("hidden", pref !== "system");
+      icons.light?.classList.toggle("hidden", pref !== "light");
+      icons.dark?.classList.toggle("hidden", pref !== "dark");
+
+      options.forEach((opt) => {
+        const isActive = opt.dataset.themeValue === pref;
+        const option = opt.closest('[role="option"]');
+        opt.classList.toggle("text-white", isActive);
+        opt.classList.toggle("bg-surface-elevated", isActive);
+        option?.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+    }
+
+    function setPreference(pref: ThemePreference, animate = true) {
+      savePreference(pref);
+      applyTheme(pref, animate);
+      root.dataset.themePreference = pref;
+      updateUI(pref);
+      closeMenu();
+    }
+
+    function openMenu() {
+      menuEl.classList.remove("hidden");
+      btn.setAttribute("aria-expanded", "true");
+    }
+
+    function closeMenu() {
+      menuEl.classList.add("hidden");
+      btn.setAttribute("aria-expanded", "false");
+    }
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (menuEl.classList.contains("hidden")) openMenu();
+      else closeMenu();
+    });
+
+    options.forEach((opt) => {
+      opt.addEventListener("click", () => {
+        const value = opt.dataset.themeValue as ThemePreference;
+        if (value) setPreference(value);
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!(e.target instanceof Node)) return;
+      if (!btn.contains(e.target) && !menuEl.contains(e.target)) closeMenu();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeMenu();
+    });
+
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (getStoredPreference() === "system") {
+        applyTheme("system", true);
+      }
+    });
+
+    updateUI(preference);
+  }
+
+  initThemeToggle();
+  document.addEventListener("astro:page-load", initThemeToggle);
+</script>

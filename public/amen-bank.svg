@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" role="img" aria-label="Amen Bank">
+  <rect width="48" height="48" rx="10" fill="#0B3D2E"/>
+  <path d="M14 32V16h4.2l5.8 9.4V16H28v16h-4.2l-5.8-9.4V32H14z" fill="#E2E8F0"/>
+  <circle cx="34" cy="24" r="6" stroke="#34D399" stroke-width="2"/>
+</svg>

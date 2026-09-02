@@ -1,0 +1,59 @@
+---
+import { getSiteConfig, getSiteContent, getUi } from "@i18n";
+import type { Locale } from "@types";
+import Layout from "@layouts/Layout.astro";
+import Hero from "@components/Hero.astro";
+import Experience from "@components/Experience.astro";
+import Projects from "@components/Projects.astro";
+import About from "@components/About.astro";
+import GitHubActivity from "@components/GitHubActivity.astro";
+import Resume from "@components/Resume.astro";
+import { absoluteUrl, buildJsonLdGraph, localePath } from "../lib/seo";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const config = getSiteConfig(locale);
+const content = getSiteContent(locale);
+const ui = getUi(locale);
+
+const pageUrl = absoluteUrl(localePath(locale));
+const jsonLd = buildJsonLdGraph({
+  locale,
+  pageUrl,
+  pageTitle: config.title,
+  personName: content.hero.name,
+  jobTitle: "Full-Stack Software Engineer",
+  description: config.description,
+  email: content.hero.email,
+  image: content.about.image,
+  socialLinks: config.socialLinks,
+  projects: content.projects.map((project) => ({
+    name: project.name,
+    summary: project.summary,
+    seoTitle: project.seoTitle,
+    seoDescription: project.seoDescription,
+    slug: project.slug,
+    image: project.image,
+    url: project.slug ? `${pageUrl}#${project.slug}` : undefined,
+  })),
+  experiences: content.experience.map((exp) => ({
+    company: exp.company,
+    position: exp.position,
+    seoTitle: exp.seoTitle,
+    seoDescription: exp.seoDescription,
+    slug: exp.slug,
+  })),
+});
+---
+
+<Layout locale={locale} config={config} ui={ui} jsonLd={jsonLd}>
+  <Hero {...content.hero} socialLinks={config.socialLinks} ui={ui} />
+  <Experience experience={content.experience} ui={ui} />
+  <Projects projects={content.projects} ui={ui} />
+  <GitHubActivity github={content.github} ui={ui} locale={locale} />
+  <About {...content.about} name={content.hero.name} ui={ui} />
+  <Resume {...content.resume} ui={ui} />
+</Layout>

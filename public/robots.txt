@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+Disallow: /dist/
+
+Sitemap: https://saladinproduction.vercel.app/sitemap-index.xml

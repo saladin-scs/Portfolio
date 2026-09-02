@@ -1,0 +1,32 @@
+---
+import { THEME_STORAGE_KEY, DEFAULT_THEME_PREFERENCE } from "../lib/theme";
+---
+
+<!-- Blocking script: prevents flash of wrong theme -->
+<script is:inline define:vars={{ THEME_STORAGE_KEY, DEFAULT_THEME_PREFERENCE }}>
+  (function () {
+    const root = document.documentElement;
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    const preference =
+      stored === "light" || stored === "dark" || stored === "system"
+        ? stored
+        : DEFAULT_THEME_PREFERENCE;
+
+    function resolve(pref) {
+      if (pref === "system") {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      return pref;
+    }
+
+    const metaColors = { dark: "#0a0e14", light: "#f5f7fa" };
+    const resolved = resolve(preference);
+
+    root.classList.add(resolved);
+    root.dataset.themePreference = preference;
+    root.dataset.themeResolved = resolved;
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = metaColors[resolved];
+  })();
+</script>

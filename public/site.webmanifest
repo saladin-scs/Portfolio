@@ -1,0 +1,25 @@
+{
+  "name": "Saleh Eddine Khalfaoui — Portfolio",
+  "short_name": "SE Khalfaoui",
+  "description": "Full-Stack Software Engineer portfolio — scalable web applications, microservices, and AI-powered solutions.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0e14",
+  "theme_color": "#0a0e14",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/saladin.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

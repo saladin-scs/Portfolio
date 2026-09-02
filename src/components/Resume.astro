@@ -1,0 +1,137 @@
+---
+import Section from "./Section.astro";
+import OptimizedImage from "./OptimizedImage.astro";
+import type { ResumeProps, UiStrings } from "@types";
+
+type Props = ResumeProps & { ui: UiStrings };
+
+const { file, title, description, ui } = Astro.props;
+const cvUrl = encodeURI(file);
+---
+
+<Section text={ui.sections.resume} href="resume">
+  <div class="mb-8 max-w-2xl">
+    <h3 class="mb-2 font-serif text-2xl font-medium text-white">{title}</h3>
+    <p class="text-base leading-relaxed text-neutral">{description}</p>
+  </div>
+
+  <div class="mb-6 flex flex-wrap gap-3">
+    <a
+      href={cvUrl}
+      download
+      class="inline-flex items-center gap-2 rounded-full btn-primary px-5 py-2.5 text-sm font-medium transition-colors"
+    >
+      {ui.resume.downloadCv}
+    </a>
+    <a
+      href={cvUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center gap-2 rounded-full border border-border/40 px-5 py-2.5 text-sm text-white transition-colors hover:border-primary/60 hover:text-primary"
+    >
+      {ui.resume.openNewTab}
+      <OptimizedImage src="/external.svg" alt="" width={14} height={14} class="h-3.5 w-3.5 opacity-70" />
+    </a>
+  </div>
+
+  <div
+    class="resume-viewer theme-panel overflow-hidden shadow-lg"
+  >
+    <div class="flex items-center justify-between border-b border-border/20 px-4 py-3 sm:px-5">
+      <p class="truncate text-xs text-neutral sm:text-sm">
+        Saleh_Eddin_CV.pdf
+      </p>
+      <button
+        type="button"
+        class="resume-fullscreen rounded-md border border-border/40 px-3 py-1.5 text-xs text-white transition-colors hover:border-primary/60 hover:text-primary"
+        data-cv-url={cvUrl}
+      >
+        {ui.resume.fullScreen}
+      </button>
+    </div>
+
+    <div class="relative bg-inset">
+      <iframe
+        src={`${cvUrl}#view=FitH&toolbar=0`}
+        title={title}
+        class="h-[min(75vh,860px)] w-full border-0"
+        loading="lazy"
+      />
+      <noscript>
+        <p class="p-6 text-center text-sm text-neutral">
+          {ui.resume.noscript}
+          <a href={cvUrl} class="ml-1 text-primary underline">{ui.resume.downloadPdf}</a>
+        </p>
+      </noscript>
+    </div>
+  </div>
+
+  <p class="mt-4 text-xs text-neutral/70">
+    {ui.resume.previewNote}
+  </p>
+</Section>
+
+<dialog
+  id="cv-fullscreen-dialog"
+  class="fixed inset-0 z-[100] m-0 h-full max-h-none w-full max-w-none border-0 bg-transparent p-0 backdrop:backdrop-blur-sm"
+  aria-label={ui.resume.fullscreenLabel}
+>
+  <div class="flex h-full flex-col bg-inset">
+    <header class="flex items-center justify-between border-b border-border/20 px-4 py-3 sm:px-6">
+      <p class="text-sm text-white">{title}</p>
+      <button
+        type="button"
+        id="cv-fullscreen-close"
+        class="rounded-full border border-border/40 p-2 text-neutral transition-colors hover:border-foreground/40 hover:text-white"
+        aria-label={ui.resume.closeFullscreen}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </header>
+    <iframe
+      id="cv-fullscreen-frame"
+      title={`${title} full screen`}
+      class="h-full w-full flex-1 border-0"
+    />
+  </div>
+</dialog>
+
+<script>
+  function initResumeViewer() {
+    const dialog = document.getElementById("cv-fullscreen-dialog") as HTMLDialogElement | null;
+    const frame = document.getElementById("cv-fullscreen-frame") as HTMLIFrameElement | null;
+    const closeBtn = document.getElementById("cv-fullscreen-close");
+    const openBtn = document.querySelector<HTMLButtonElement>(".resume-fullscreen");
+
+    openBtn?.addEventListener("click", () => {
+      const url = openBtn.dataset.cvUrl;
+      if (!dialog || !frame || !url) return;
+      frame.src = `${url}#view=FitH`;
+      dialog.showModal();
+      document.body.style.overflow = "hidden";
+    });
+
+    closeBtn?.addEventListener("click", () => dialog?.close());
+
+    dialog?.addEventListener("close", () => {
+      document.body.style.overflow = "";
+      if (frame) frame.src = "";
+    });
+
+    dialog?.addEventListener("cancel", () => {
+      document.body.style.overflow = "";
+      if (frame) frame.src = "";
+    });
+  }
+
+  initResumeViewer();
+  document.addEventListener("astro:page-load", initResumeViewer);
+</script>
+
+<style>
+  .resume-viewer iframe {
+    background: var(--theme-inset);
+  }
+</style>

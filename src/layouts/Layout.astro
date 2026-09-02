@@ -1,9 +1,22 @@
 ---
 import Header from "@components/Header.astro";
-import "@fontsource/be-vietnam-pro";
+import ThemeInit from "@components/ThemeInit.astro";
+import "@fontsource/be-vietnam-pro/400.css";
 import "@fontsource-variable/gabarito";
-import { SITE_CONFIG } from "@config";
 import Footer from "@components/Footer.astro";
+import { LOCALES } from "@i18n";
+import { absoluteUrl, SITE_NAME, SITE_URL } from "../lib/seo";
+import type { Locale, SiteConfig, UiStrings } from "@types";
+
+interface Props {
+  locale: Locale;
+  config: SiteConfig;
+  ui: UiStrings;
+  jsonLd?: Record<string, unknown>;
+  noindex?: boolean;
+}
+
+const { locale, config, ui, jsonLd, noindex = false } = Astro.props;
 
 const {
   title,
@@ -14,39 +27,73 @@ const {
   author,
   socialLinks,
   socialImage,
-  canonicalURL = new URL(Astro.url.pathname, Astro.site).href,
-} = SITE_CONFIG;
+} = config;
 
-const ogImgUrl = canonicalURL + socialImage;
+const canonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
+const ogImageUrl = absoluteUrl(socialImage);
+const homePath = locale === "fr" ? "/fr/" : "/";
+const ogLocale = locale === "fr" ? "fr_FR" : "en_US";
+const ogLocaleAlt = locale === "fr" ? "en_US" : "fr_FR";
 ---
 
 <!doctype html>
 <html lang={lang} class="scroll-pt-16 scroll-smooth">
   <head>
+    <ThemeInit />
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
     <meta name="author" content={author} />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a0e14" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content={noindex ? "noindex, follow" : "index, follow, max-image-preview:large"} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="generator" content={Astro.generator} />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="canonical" href={canonicalUrl} />
     <title>{title}</title>
 
+    {
+      LOCALES.map(({ path, hreflang }) => (
+        <link rel="alternate" hreflang={hreflang} href={absoluteUrl(path)} />
+      ))
+    }
+    <link rel="alternate" hreflang="x-default" href={absoluteUrl("/")} />
+
+    <link rel="preload" href="/saladin.png" as="image" type="image/png" />
+
+    <meta property="og:type" content="profile" />
+    <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonicalURL} />
-    <meta property="og:image" content={ogImgUrl} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:alt" content={`${SITE_NAME} — Full-Stack Software Engineer portfolio preview`} />
+    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:locale:alternate" content={ogLocaleAlt} />
 
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={canonicalURL} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={ogImgUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content={`${SITE_NAME} — Full-Stack Software Engineer portfolio preview`} />
+
+    {
+      jsonLd && (
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+      )
+    }
   </head>
-  <body class="bg-black font-sans">
-    <Header siteLogo={siteLogo} navLinks={navLinks} />
+  <body class="font-sans antialiased">
+    <Header
+      siteLogo={siteLogo}
+      navLinks={navLinks}
+      locale={locale}
+      homePath={homePath}
+      ui={ui}
+    />
     <main class="mx-auto max-w-3xl px-5">
       <slot />
     </main>
-    <Footer author={author} socialLinks={socialLinks} />
+    <Footer author={author} socialLinks={socialLinks} ui={ui} />
   </body>
 </html>

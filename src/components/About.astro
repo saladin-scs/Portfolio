@@ -1,26 +1,459 @@
 ---
 import Section from "./Section.astro";
-import { Image } from "astro:assets";
-import type { AboutProps, HeroProps } from "@types";
+import OptimizedImage from "./OptimizedImage.astro";
+import type { AboutProps, HeroProps, UiStrings } from "@types";
 
-type Props = AboutProps & Pick<HeroProps, "name">;
+type Props = AboutProps & Pick<HeroProps, "name"> & { ui: UiStrings };
 
-const { description, image, name } = Astro.props;
+const { paragraphs, focusTitle, focusAreas, quote, image, name, ui } =
+  Astro.props;
+
+const [lead, secondary, ...rest] = paragraphs;
 ---
 
-<Section text="About Me" href="about">
-  <div class="flex flex-col items-center gap-12 md:flex-row md:gap-8">
-    <p class="w-auto text-base text-neutral md:pr-5">{description}</p>
-    <div
-      class="h-80 w-64 flex-shrink-0 rotate-[5deg] bg-white p-4 md:rotate-[7deg]"
-    >
-      <Image
-        class="object-cover"
-        src={image}
-        width="260"
-        height="260"
-        alt={name}
-      />
+<Section text={ui.sections.about} href="about">
+  <div class="about-layout">
+    <div class="about-main">
+      <article class="about-intro theme-panel">
+        <div class="about-intro-accent" aria-hidden="true"></div>
+        <span class="about-badge">{ui.aboutSection.badge}</span>
+        <p class="about-lead">{lead}</p>
+        {secondary && <p class="about-secondary">{secondary}</p>}
+
+        {
+          rest.length > 0 && (
+            <details class="about-more group/more">
+              <summary class="about-more-summary">
+                <span>{ui.aboutSection.readMore}</span>
+                <span class="about-more-chevron" aria-hidden="true">
+                  →
+                </span>
+              </summary>
+              <div class="about-more-body">
+                {rest.map((paragraph) => (
+                  <p>{paragraph}</p>
+                ))}
+              </div>
+            </details>
+          )
+        }
+      </article>
+
+      <section class="about-focus" aria-labelledby="about-focus-title">
+        <div class="about-focus-header">
+          <span class="about-focus-label" aria-hidden="true">Focus</span>
+          <h3 id="about-focus-title" class="about-focus-title">
+            {focusTitle}
+          </h3>
+        </div>
+
+        <ul class="about-focus-grid list-none">
+          {
+            focusAreas.map(({ title, description }, index) => (
+              <li class="about-focus-card">
+                <div class="about-focus-card-top">
+                  <span class="about-focus-step">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span class="about-focus-dot" aria-hidden="true"></span>
+                </div>
+                <h4 class="about-focus-card-title">{title}</h4>
+                <p class="about-focus-card-desc">{description}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <figure class="about-quote theme-panel">
+        <blockquote cite="">
+          <p>{quote}</p>
+        </blockquote>
+        <figcaption class="about-quote-caption">— {name}</figcaption>
+      </figure>
     </div>
+
+    <aside class="about-aside" aria-label={name}>
+      <div class="about-photo-shell">
+        <div class="about-photo-glow" aria-hidden="true"></div>
+        <div class="about-photo-frame">
+          <OptimizedImage
+            class="about-photo"
+            src={image}
+            width={280}
+            height={360}
+            alt={name}
+          />
+        </div>
+        <div class="about-photo-meta">
+          <p class="about-photo-name">{name}</p>
+          <p class="about-photo-role">{ui.aboutSection.badge}</p>
+        </div>
+      </div>
+    </aside>
   </div>
 </Section>
+
+<style>
+  .about-layout {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  @media (min-width: 1024px) {
+    .about-layout {
+      grid-template-columns: minmax(0, 1fr) 17.5rem;
+      gap: 3rem;
+    }
+  }
+
+  .about-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    min-width: 0;
+  }
+
+  .about-intro {
+    position: relative;
+    overflow: hidden;
+    padding: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .about-intro {
+      padding: 1.75rem 2rem;
+    }
+  }
+
+  .about-intro-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--theme-primary) 0%,
+      var(--theme-accent) 55%,
+      transparent 100%
+    );
+  }
+
+  .about-badge {
+    display: inline-block;
+    margin-bottom: 1rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 70%, transparent);
+    padding: 0.3rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--theme-muted);
+  }
+
+  .about-lead {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--theme-foreground);
+  }
+
+  .about-secondary {
+    margin: 1rem 0 0;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: color-mix(in srgb, var(--theme-foreground) 82%, var(--theme-muted));
+  }
+
+  .about-more {
+    margin-top: 1.15rem;
+  }
+
+  .about-more-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    cursor: pointer;
+    list-style: none;
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent);
+    background: color-mix(in srgb, var(--theme-inset) 35%, transparent);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--theme-foreground);
+    transition:
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .about-more-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .about-more-summary:hover {
+    border-color: color-mix(in srgb, var(--theme-primary) 45%, var(--theme-border));
+    color: var(--theme-primary);
+  }
+
+  .about-more-chevron {
+    transition: transform 0.2s ease;
+  }
+
+  .about-more[open] .about-more-chevron {
+    transform: rotate(90deg);
+  }
+
+  .about-more-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent);
+  }
+
+  .about-more-body p {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--theme-muted);
+  }
+
+  .about-focus-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .about-focus-label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--theme-primary);
+  }
+
+  .about-focus-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 2vw, 1.5rem);
+    font-weight: 600;
+    color: var(--theme-foreground);
+  }
+
+  .about-focus-grid {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (min-width: 640px) {
+    .about-focus-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .about-focus-grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .about-focus-card:nth-child(1),
+    .about-focus-card:nth-child(2) {
+      grid-column: span 3;
+    }
+
+    .about-focus-card:nth-child(3),
+    .about-focus-card:nth-child(4) {
+      grid-column: span 3;
+    }
+
+    .about-focus-card:nth-child(5) {
+      grid-column: span 6;
+    }
+  }
+
+  .about-focus-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 60%, transparent);
+    background: color-mix(in srgb, var(--theme-surface) 88%, transparent);
+    padding: 1.15rem 1.2rem;
+    transition:
+      border-color 0.25s ease,
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .about-focus-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--theme-primary) 35%, var(--theme-border));
+    box-shadow: var(--theme-shadow-lg);
+  }
+
+  .about-focus-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .about-focus-step {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--theme-primary);
+  }
+
+  .about-focus-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: var(--theme-accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-accent) 15%, transparent);
+  }
+
+  .about-focus-card-title {
+    margin: 0 0 0.45rem;
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--theme-foreground);
+  }
+
+  .about-focus-card-desc {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--theme-muted);
+  }
+
+  .about-quote {
+    position: relative;
+    margin: 0;
+    padding: 1.5rem 1.75rem;
+  }
+
+  .about-quote blockquote {
+    margin: 0;
+  }
+
+  .about-quote blockquote p {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.05rem, 1.8vw, 1.2rem);
+    line-height: 1.65;
+    font-style: italic;
+    color: color-mix(in srgb, var(--theme-foreground) 90%, var(--theme-muted));
+  }
+
+  .about-quote blockquote p::before {
+    content: "\201C";
+    margin-right: 0.15rem;
+    color: var(--theme-primary);
+  }
+
+  .about-quote-caption {
+    margin-top: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--theme-muted);
+  }
+
+  .about-aside {
+    width: 100%;
+    max-width: 17.5rem;
+    margin-inline: auto;
+  }
+
+  @media (min-width: 1024px) {
+    .about-aside {
+      position: sticky;
+      top: 6.5rem;
+      margin-inline: 0;
+    }
+  }
+
+  .about-photo-shell {
+    position: relative;
+  }
+
+  .about-photo-glow {
+    position: absolute;
+    inset: 10% 5% auto;
+    height: 55%;
+    border-radius: 999px;
+    background: radial-gradient(
+      ellipse at center,
+      color-mix(in srgb, var(--theme-primary) 22%, transparent) 0%,
+      transparent 70%
+    );
+    filter: blur(18px);
+    pointer-events: none;
+  }
+
+  .about-photo-frame {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 70%, transparent);
+    background: var(--theme-inset);
+    padding: 0.65rem;
+    transform: rotate(2deg);
+    transition: transform 0.3s ease;
+  }
+
+  .about-photo-shell:hover .about-photo-frame {
+    transform: rotate(0deg);
+  }
+
+  .about-photo {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    border-radius: 0.85rem;
+    object-fit: cover;
+  }
+
+  .about-photo-meta {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .about-photo-name {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--theme-foreground);
+  }
+
+  .about-photo-role {
+    margin: 0.25rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--theme-muted);
+  }
+
+  .about-more-summary:focus-visible {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 2px;
+  }
+</style>

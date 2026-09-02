@@ -1,41 +1,700 @@
 ---
 import Section from "./Section.astro";
-import type { ExperienceProps } from "@types";
+import OptimizedImage from "./OptimizedImage.astro";
+import type { ExperienceProps, UiStrings } from "@types";
 
 interface Props {
   experience: ExperienceProps[];
+  ui: UiStrings;
 }
 
-const { experience } = Astro.props;
+const { experience, ui } = Astro.props;
+
+const TECH_SECTION_LINKS: Record<string, string> = {
+  "Spring Boot": "experience-amen-bank-2026",
+  "Apache Kafka": "experience-amen-bank-2026",
+  Microservices: "experience-amen-bank-2026",
+  Java: "experience-amen-bank-2026",
+  AI: "experience-amen-bank-2026",
+  IA: "experience-amen-bank-2026",
+  React: "bytebattle",
+  NestJS: "bytebattle",
+  Docker: "bytebattle",
+  DevOps: "bytebattle",
+  "Next.js": "experience-mobelite-labs",
+  "Power BI": "experience-mobelite-labs",
+  ETL: "experience-mobelite-labs",
+  "Business Intelligence": "experience-mobelite-labs",
+};
+
+function timelineYear(date: string): string {
+  const match = date.match(/\d{4}/);
+  return match ? match[0] : date;
+}
+
+function companyInitials(company: string): string {
+  return company
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
 ---
 
-<Section text="Work Experience" href="experience">
-  {
-    experience.map(({ company, position, startDate, endDate, summary }) => (
-      <div class="mb-10">
-        <h3 class="mb-1.5 font-serif text-2xl font-semibold text-white">
-          {company}
-        </h3>
-        <div class="flex flex-col items-start pb-5">
-          <h4 class="mb-0.5 font-serif text-2xl font-medium text-primary">
-            {position}
-          </h4>
-          <span class="pb-[2px] text-sm text-white/70">
-            {startDate} — {endDate}
-          </span>
-        </div>
-        {Array.isArray(summary) ? (
-          <ul class="list-none">
-            {summary.map((log) => (
-              <li class="relative mb-3 pl-8 text-base text-neutral before:absolute before:top-1 before:left-0 before:content-[url(/check.svg)]">
-                {log}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p class="text-base text-neutral">{summary}</p>
-        )}
-      </div>
-    ))
-  }
+<Section text={ui.sections.experience} href="experience">
+  <ol class="experience-timeline list-none" aria-label={ui.sections.experience}>
+    {
+      experience.map(
+        (
+          {
+            company,
+            position,
+            startDate,
+            endDate,
+            location,
+            badge,
+            summary,
+            technologies,
+            logo,
+            linkExternal,
+            details,
+            slug,
+            relatedProjectSlug,
+          },
+          index,
+        ) => {
+          const bullets = Array.isArray(summary) ? summary : [summary];
+          const [lead, ...highlights] = bullets;
+          const year = timelineYear(startDate);
+          const step = String(index + 1).padStart(2, "0");
+
+          return (
+            <li class="experience-timeline-item">
+              <div class="timeline-marker" aria-hidden="true">
+                <span class="timeline-step">{step}</span>
+                <span class="timeline-year">{year}</span>
+              </div>
+
+              <article class="experience-card theme-panel" id={slug ? `experience-${slug}` : undefined}>
+                <header class="experience-card-header">
+                  <div class="experience-identity">
+                    {logo ? (
+                      <OptimizedImage
+                        src={logo}
+                        alt=""
+                        width={52}
+                        height={52}
+                        class="experience-logo"
+                      />
+                    ) : (
+                      <span class="experience-logo-fallback" aria-hidden="true">
+                        {companyInitials(company)}
+                      </span>
+                    )}
+
+                    <div class="min-w-0">
+                      <div class="experience-meta-row">
+                        {badge && (
+                          <span class="experience-badge">{badge}</span>
+                        )}
+                        <time
+                          class="experience-period"
+                          datetime={`${startDate}/${endDate}`}
+                        >
+                          {startDate} — {endDate}
+                        </time>
+                      </div>
+                      <h3 class="experience-company">{company}</h3>
+                      <p class="experience-role">{position}</p>
+                      {location && (
+                        <p class="experience-location">{location}</p>
+                      )}
+                    </div>
+                  </div>
+                </header>
+
+                <p class="experience-lead">{lead}</p>
+
+                {highlights.length > 0 && (
+                  <details class="experience-highlights group/highlights">
+                    <summary class="experience-highlights-summary">
+                      <span>
+                        {ui.experience.viewHighlights}
+                        <span class="experience-highlights-count">
+                          ({highlights.length})
+                        </span>
+                      </span>
+                      <span
+                        class="experience-highlights-chevron"
+                        aria-hidden="true"
+                      >
+                        →
+                      </span>
+                    </summary>
+                    <ul class="experience-highlights-list">
+                      {highlights.map((item) => (
+                        <li>{item}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+
+                {technologies && technologies.length > 0 && (
+                  <ul
+                    class="experience-stack"
+                    aria-label={`${ui.experience.technologiesAt} ${company}`}
+                  >
+                    {technologies.map((tech) => {
+                      const anchor = TECH_SECTION_LINKS[tech];
+                      return (
+                        <li>
+                          {anchor ? (
+                            <a href={`#${anchor}`} class="experience-stack-tag experience-stack-link">
+                              {tech}
+                            </a>
+                          ) : (
+                            <span class="experience-stack-tag">{tech}</span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+
+                {relatedProjectSlug && (
+                  <p class="experience-related">
+                    <a href={`#${relatedProjectSlug}`} class="experience-related-link">
+                      {ui.experience.relatedProject}: {relatedProjectSlug === "bytebattle" ? "ByteBattle" : relatedProjectSlug}
+                    </a>
+                  </p>
+                )}
+
+                {linkExternal && (
+                  <a
+                    href={linkExternal.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="experience-link"
+                  >
+                    {linkExternal.text}
+                    <OptimizedImage
+                      src="/external.svg"
+                      alt=""
+                      width={14}
+                      height={14}
+                      class="h-3.5 w-3.5 opacity-70"
+                    />
+                  </a>
+                )}
+
+                {details && (
+                  <details class="experience-details group/details">
+                    <summary class="experience-details-summary">
+                      <span>{ui.experience.viewExperience}</span>
+                      <span
+                        class="experience-details-chevron"
+                        aria-hidden="true"
+                      >
+                        →
+                      </span>
+                    </summary>
+
+                    <div class="experience-details-body">
+                      <div>
+                        <p class="subsection-title">{ui.experience.overview}</p>
+                        <blockquote class="experience-overview-quote">
+                          {details.overview}
+                        </blockquote>
+                      </div>
+
+                      {details.architecture.length > 0 && (
+                        <div>
+                          <p class="subsection-title">
+                            {ui.experience.architecture}
+                          </p>
+                          <div
+                            class="experience-architecture"
+                            role="img"
+                            aria-label={ui.experience.architectureFlow}
+                          >
+                            <ol class="experience-architecture-flow">
+                              {details.architecture.map((step, stepIndex) => (
+                                <>
+                                  <li class="experience-architecture-step">
+                                    {step}
+                                  </li>
+                                  {stepIndex < details.architecture.length - 1 && (
+                                    <li
+                                      class="experience-architecture-arrow"
+                                      aria-hidden="true"
+                                    >
+                                      ↓
+                                    </li>
+                                  )}
+                                </>
+                              ))}
+                            </ol>
+                          </div>
+                        </div>
+                      )}
+
+                      {details.contributions.length > 0 && (
+                        <div>
+                          <p class="subsection-title mb-4">
+                            {ui.experience.keyContributions}
+                          </p>
+                          <ul class="grid list-none gap-4 sm:grid-cols-2">
+                            {details.contributions.map(
+                              ({ title, description }) => (
+                                <li class="rounded-xl border border-border/20 bg-surface/50 p-5 transition-colors hover:border-border/40">
+                                  <p class="card-title">{title}</p>
+                                  <p class="text-sm leading-relaxed text-neutral">
+                                    {description}
+                                  </p>
+                                </li>
+                              ),
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                      {details.acknowledgements && (
+                        <div>
+                          <p class="mb-2 text-sm font-medium text-white/80">
+                            {ui.experience.acknowledgements}
+                          </p>
+                          <p class="text-sm leading-relaxed text-neutral/80">
+                            {details.acknowledgements}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                )}
+              </article>
+            </li>
+          );
+        },
+      )
+    }
+  </ol>
 </Section>
+
+<style>
+  .experience-timeline {
+    position: relative;
+    margin: 0;
+    padding: 0;
+  }
+
+  .experience-timeline::before {
+    content: "";
+    position: absolute;
+    top: 0.75rem;
+    bottom: 0.75rem;
+    left: 1.125rem;
+    width: 2px;
+    background: linear-gradient(
+      180deg,
+      var(--theme-primary) 0%,
+      color-mix(in srgb, var(--theme-accent) 70%, var(--theme-primary)) 55%,
+      color-mix(in srgb, var(--theme-border) 80%, transparent) 100%
+    );
+    border-radius: 999px;
+  }
+
+  .experience-timeline-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: 1rem;
+    padding-bottom: 2.5rem;
+  }
+
+  .experience-timeline-item:last-child {
+    padding-bottom: 0;
+  }
+
+  .timeline-marker {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding-top: 0.15rem;
+  }
+
+  .timeline-step {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    border: 2px solid color-mix(in srgb, var(--theme-primary) 45%, var(--theme-border));
+    background: var(--theme-surface-elevated);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--theme-primary);
+    box-shadow: var(--theme-glow);
+  }
+
+  .timeline-year {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--theme-muted);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .experience-card {
+    overflow: hidden;
+    padding: 1.25rem;
+    transition:
+      border-color 0.25s ease,
+      box-shadow 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  @media (min-width: 768px) {
+    .experience-card {
+      padding: 1.5rem 1.75rem;
+    }
+  }
+
+  .experience-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--theme-shadow-lg);
+  }
+
+  .experience-card-header {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent);
+  }
+
+  .experience-identity {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .experience-logo,
+  .experience-logo-fallback {
+    flex-shrink: 0;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 70%, transparent);
+    background: var(--theme-inset);
+  }
+
+  .experience-logo-fallback {
+    display: grid;
+    place-items: center;
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--theme-primary);
+  }
+
+  .experience-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .experience-badge {
+    display: inline-block;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 70%, transparent);
+    padding: 0.2rem 0.65rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--theme-muted);
+  }
+
+  .experience-period {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    color: var(--theme-muted);
+  }
+
+  .experience-company {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.15;
+    color: var(--theme-foreground);
+  }
+
+  .experience-role {
+    margin: 0.35rem 0 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--theme-primary);
+  }
+
+  .experience-location {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--theme-muted);
+  }
+
+  .experience-lead {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: color-mix(in srgb, var(--theme-foreground) 88%, var(--theme-muted));
+  }
+
+  .experience-highlights {
+    margin-top: 1rem;
+  }
+
+  .experience-highlights-summary,
+  .experience-details-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    cursor: pointer;
+    list-style: none;
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent);
+    background: color-mix(in srgb, var(--theme-inset) 35%, transparent);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--theme-foreground);
+    transition:
+      border-color 0.2s ease,
+      color 0.2s ease,
+      background-color 0.2s ease;
+  }
+
+  .experience-highlights-summary::-webkit-details-marker,
+  .experience-details-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .experience-highlights-summary:hover,
+  .experience-details-summary:hover {
+    border-color: color-mix(in srgb, var(--theme-primary) 45%, var(--theme-border));
+    color: var(--theme-primary);
+  }
+
+  .experience-highlights-count {
+    margin-left: 0.25rem;
+    color: var(--theme-muted);
+    font-weight: 400;
+  }
+
+  .experience-highlights-chevron,
+  .experience-details-chevron {
+    transition: transform 0.2s ease;
+  }
+
+  .experience-highlights[open] .experience-highlights-chevron,
+  .experience-details[open] .experience-details-chevron {
+    transform: rotate(90deg);
+  }
+
+  .experience-highlights-list {
+    margin: 0.85rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .experience-highlights-list li {
+    position: relative;
+    margin-bottom: 0.65rem;
+    padding-left: 1.25rem;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--theme-muted);
+  }
+
+  .experience-highlights-list li::before {
+    content: "";
+    position: absolute;
+    top: 0.65rem;
+    left: 0;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--theme-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 18%, transparent);
+  }
+
+  .experience-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.15rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .experience-stack-tag {
+    display: inline-block;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 65%, transparent);
+    background: color-mix(in srgb, var(--theme-surface) 80%, transparent);
+    padding: 0.35rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+    color: color-mix(in srgb, var(--theme-foreground) 85%, var(--theme-muted));
+    transition:
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .experience-stack-tag:hover {
+    border-color: color-mix(in srgb, var(--theme-primary) 50%, var(--theme-border));
+    color: var(--theme-foreground);
+  }
+
+  .experience-stack-link {
+    text-decoration: none;
+  }
+
+  .experience-stack-link:hover {
+    color: var(--theme-primary);
+  }
+
+  .experience-related {
+    margin: 0.85rem 0 0;
+    font-size: 0.8125rem;
+  }
+
+  .experience-related-link {
+    color: var(--theme-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .experience-related-link:hover {
+    color: var(--theme-primary);
+    text-decoration: underline;
+  }
+
+  .experience-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--theme-foreground);
+    transition: color 0.2s ease;
+  }
+
+  .experience-link:hover {
+    color: var(--theme-primary);
+    text-decoration: underline;
+  }
+
+  .experience-details {
+    margin-top: 1rem;
+  }
+
+  .experience-details-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent);
+  }
+
+  .experience-overview-quote {
+    margin: 0;
+    border-left: 2px solid color-mix(in srgb, var(--theme-primary) 60%, transparent);
+    padding-left: 1rem;
+    font-size: 1rem;
+    line-height: 1.65;
+    font-style: italic;
+    color: var(--theme-muted);
+  }
+
+  .experience-architecture {
+    overflow-x: auto;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent);
+    background: color-mix(in srgb, var(--theme-inset) 45%, transparent);
+    padding: 1rem;
+  }
+
+  .experience-architecture-flow {
+    min-width: 220px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: center;
+  }
+
+  .experience-architecture-step {
+    border-radius: 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-elevated) 85%, transparent);
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    color: color-mix(in srgb, var(--theme-foreground) 90%, var(--theme-muted));
+  }
+
+  .experience-architecture-arrow {
+    padding: 0.25rem 0;
+    color: var(--theme-primary);
+  }
+
+  .experience-highlights-summary:focus-visible,
+  .experience-details-summary:focus-visible {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 2px;
+  }
+
+  @media (min-width: 768px) {
+    .experience-timeline::before {
+      left: 1.375rem;
+    }
+
+    .experience-timeline-item {
+      grid-template-columns: 4.5rem minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+
+    .timeline-marker {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding-top: 1.35rem;
+    }
+
+    .timeline-step {
+      width: 2.75rem;
+      height: 2.75rem;
+      font-size: 0.7rem;
+    }
+
+    .timeline-year {
+      writing-mode: horizontal-tb;
+      transform: none;
+      min-width: 2.5rem;
+      text-align: right;
+    }
+  }
+</style>

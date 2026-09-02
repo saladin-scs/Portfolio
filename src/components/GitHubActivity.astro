@@ -1,0 +1,201 @@
+---
+import Section from "./Section.astro";
+import OptimizedImage from "./OptimizedImage.astro";
+import { fetchGitHubActivity, formatRelativeDate } from "../lib/github";
+import type { GitHubConfig, UiStrings } from "@types";
+
+interface Props {
+  github: GitHubConfig;
+  ui: UiStrings;
+  locale: string;
+}
+
+const { github, ui, locale } = Astro.props;
+const data = await fetchGitHubActivity(github.username);
+---
+
+<Section text={ui.sections.github} href="github">
+  {
+    !data ? (
+      <div class="theme-panel p-8 text-center">
+        <p class="mb-4 text-neutral">{ui.github.unavailable}</p>
+        <a
+          href={github.profileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary/90"
+        >
+          {ui.github.viewProfile}
+          <OptimizedImage src="/external.svg" alt="" width={14} height={14} class="h-3.5 w-3.5" />
+        </a>
+      </div>
+    ) : (
+      <div class="space-y-8">
+        <!-- Profile & stats -->
+        <div class="theme-panel flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-4">
+            <OptimizedImage
+              src={data.profile.avatarUrl}
+              alt={`${data.profile.login} avatar`}
+              width={64}
+              height={64}
+              class="h-16 w-16 rounded-full border border-border/30"
+            />
+            <div>
+              <a
+                href={data.profile.htmlUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-serif text-xl font-medium text-primary hover:underline"
+              >
+                @{data.profile.login}
+              </a>
+              <p class="text-sm text-neutral">{ui.github.subtitle}</p>
+            </div>
+          </div>
+
+          <ul class="grid grid-cols-3 gap-3 sm:gap-4">
+            <li class="rounded-xl border border-border/20 bg-inset/30 px-4 py-3 text-center">
+              <p class="font-serif text-2xl font-semibold text-white">{data.profile.publicRepos}</p>
+              <p class="text-xs text-neutral">{ui.github.publicRepos}</p>
+            </li>
+            <li class="rounded-xl border border-border/20 bg-inset/30 px-4 py-3 text-center">
+              <p class="font-serif text-2xl font-semibold text-white">{data.totalStars}</p>
+              <p class="text-xs text-neutral">{ui.github.totalStars}</p>
+            </li>
+            <li class="rounded-xl border border-border/20 bg-inset/30 px-4 py-3 text-center">
+              <p class="font-serif text-2xl font-semibold text-white">{data.profile.followers}</p>
+              <p class="text-xs text-neutral">{ui.github.followers}</p>
+            </li>
+          </ul>
+        </div>
+
+        <div class="grid gap-8 lg:grid-cols-2">
+          <!-- Recent repositories -->
+          <div class="theme-panel">
+            <div class="border-b border-border/20 px-5 py-4">
+              <h3 class="font-serif text-lg font-medium text-white">{ui.github.recentRepos}</h3>
+            </div>
+            <ul class="divide-y divide-neutral/20">
+              {
+                data.repos.map((repo) => (
+                  <li class="p-5 transition-colors hover:bg-card-hover">
+                    <div class="mb-1 flex items-start justify-between gap-3">
+                      <a
+                        href={repo.htmlUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="font-medium text-primary hover:underline"
+                      >
+                        {repo.name}
+                      </a>
+                      <div class="flex flex-shrink-0 items-center gap-3 text-xs text-neutral">
+                        {repo.language && (
+                          <span class="inline-flex items-center gap-1.5">
+                            <span
+                              class="inline-block h-2.5 w-2.5 rounded-full"
+                              style={`background-color: ${repo.languageColor}`}
+                            />
+                            {repo.language}
+                          </span>
+                        )}
+                        {repo.stargazersCount > 0 && (
+                          <span>★ {repo.stargazersCount}</span>
+                        )}
+                      </div>
+                    </div>
+                    {repo.description && (
+                      <p class="mb-2 line-clamp-2 text-sm text-neutral">{repo.description}</p>
+                    )}
+                    <p class="text-xs text-neutral/70">
+                      {ui.github.lastPush}: {formatRelativeDate(repo.pushedAt, locale)}
+                    </p>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+
+          <div class="space-y-8">
+            <!-- Languages -->
+            {
+              data.languages.length > 0 && (
+                <div class="theme-panel">
+                  <div class="border-b border-border/20 px-5 py-4">
+                    <h3 class="font-serif text-lg font-medium text-white">{ui.github.languages}</h3>
+                  </div>
+                  <div class="space-y-4 p-5">
+                    {
+                      data.languages.map((lang) => (
+                        <div>
+                          <div class="mb-1.5 flex items-center justify-between text-sm">
+                            <span class="text-white/90">{lang.name}</span>
+                            <span class="text-neutral">{lang.percentage}%</span>
+                          </div>
+                          <div class="h-2 overflow-hidden rounded-full bg-inset/40">
+                            <div
+                              class="h-full rounded-full transition-all"
+                              style={`width: ${lang.percentage}%; background-color: ${lang.color}`}
+                            />
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              )
+            }
+
+            <!-- Commit activity -->
+            <div class="theme-panel">
+              <div class="border-b border-border/20 px-5 py-4">
+                <h3 class="font-serif text-lg font-medium text-white">{ui.github.commitActivity}</h3>
+              </div>
+              <ul class="divide-y divide-neutral/20">
+                {
+                  data.commitActivity.map((activity) => (
+                    <li class="px-5 py-4">
+                      <div class="mb-1 flex items-center justify-between gap-2">
+                        <a
+                          href={activity.repoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="truncate text-sm font-medium text-primary hover:underline"
+                        >
+                          {activity.repo}
+                        </a>
+                        <span class="flex-shrink-0 text-xs text-neutral">
+                          {formatRelativeDate(activity.date, locale)}
+                        </span>
+                      </div>
+                      {activity.commits !== undefined && activity.commits > 0 && (
+                        <p class="text-xs text-neutral">
+                          {activity.commits} {activity.commits === 1 ? ui.github.commit : ui.github.commits}
+                        </p>
+                      )}
+                      {activity.message && (
+                        <p class="mt-1 truncate text-xs text-neutral/70">{activity.message}</p>
+                      )}
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <a
+            href={github.profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 rounded-full border border-border/40 px-5 py-2.5 text-sm text-white transition-colors hover:border-primary/60 hover:text-primary"
+          >
+            {ui.github.viewProfile}
+            <OptimizedImage src="/github.svg" alt="" width={16} height={16} class="h-4 w-4 opacity-80" />
+          </a>
+        </div>
+      </div>
+    )
+  }
+</Section>
