@@ -18,7 +18,7 @@ export const SITE_CONFIG: SiteConfig = {
     { text: "LinkedIn", href: "https://www.linkedin.com/in/saleheddinkhalfaoui/?skipRedirect=true" },
     { text: "GitHub", href: "https://github.com/saladin-scs" },
     { text: "Portfolio", href: "https://saladinproduction.vercel.app" },
-    { text: "Resume", href: "/cv/Saleh-Eddine-Khalfaoui-CV.pdf" },
+    { text: "Resume", href: "/cv/SaladinPfeCv.pdf" },
   ],
   socialImage: "/og/portfolio.svg",
 };
@@ -400,7 +400,7 @@ export const SITE_CONTENT: SiteContent = {
     image: "/saladin.png",
   },
   resume: {
-    file: "/cv/Saleh-Eddine-Khalfaoui-CV.pdf",
+    file: "/cv/SaladinPfeCv.pdf",
     title: "Saleh Eddin CV",
     description:
       "Software Engineer specializing in full-stack development, backend engineering, and DevOps. View or download my latest curriculum vitae below.",

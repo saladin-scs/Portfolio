@@ -271,5 +271,5 @@ export const socialLinks = [
   { text: "LinkedIn", href: "https://www.linkedin.com/in/saleheddinkhalfaoui/?skipRedirect=true" },
   { text: "GitHub", href: "https://github.com/saladin-scs" },
   { text: "Portfolio", href: "https://saladinproduction.vercel.app" },
-  { text: "Resume", href: "/cv/Saleh-Eddine-Khalfaoui-CV.pdf" },
+  { text: "Resume", href: "/cv/SaladinPfeCv.pdf" },
 ];
